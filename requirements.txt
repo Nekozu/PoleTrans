@@ -6,3 +6,4 @@ speechrecognition
 fast-langdetect
 aiohttp
 transformers==4.37.0
+python-dotenv
