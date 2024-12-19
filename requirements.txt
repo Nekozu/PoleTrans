@@ -1,0 +1,5 @@
+pytelegrambotapi
+fasttext
+dl-translate
+pytesseract
+speechrecognition
