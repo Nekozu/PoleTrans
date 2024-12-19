@@ -3,3 +3,6 @@ fasttext
 dl-translate
 pytesseract
 speechrecognition
+fast-langdetect
+aiohttp
+transformers==4.37.0
