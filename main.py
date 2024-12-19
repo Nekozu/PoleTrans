@@ -7,8 +7,14 @@ import os
 import pytesseract
 import speech_recognition as sr
 import asyncio
+from dotenv import load_dotenv
 
-bot = AsyncTeleBot('7163762517:AAGVkQGvZOSeGMx8W-9ifPN_5M5zwI9tJ8c')# Fasttext model load
+# Load environment variables
+load_dotenv()
+
+TOKEN = os.getenv('BOT_TOKEN') # load the bot token from env
+
+bot = AsyncTeleBot(TOKEN)# Fasttext model load
 dl = dlt.TranslationModel("nllb200", device="cpu") # you can change it as cpu, cuda, or auto. prefer to cpu
 
 def load_user_settings():
@@ -67,8 +73,6 @@ Note: Make sure to select your preferred language first using /lang command!
 - You can change your language anytime using /lang
 """
 
-
-
 @bot.message_handler(commands=["start"])
 async def start(message):
     keyboard = InlineKeyboardMarkup()
@@ -85,6 +89,14 @@ async def help(message):
         InlineKeyboardButton("Back", callback_data="back")
     )
     await bot.reply_to(message, HELP_MSG, reply_markup=keyboard)
+
+@bot.callback_query_handler(func=lambda call: call.data == "help")
+async def helpcall(call):
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(
+        InlineKeyboardButton("Back", callback_data="back")
+    )
+    await bot.edit_message_text(text=HELP_MSG, chat_id=call.message.chat.id, message_id=call.message.message_id, reply_markup=keyboard)
     
 @bot.callback_query_handler(func=lambda call: call.data == "back")
 async def back(call):
@@ -93,7 +105,60 @@ async def back(call):
         InlineKeyboardButton("🔧 Help", callback_data="help"),
         InlineKeyboardButton("🌍 Select Language", callback_data="lang")
     )
-    await bot.reply_to(call.message, START_MSG, reply_markup=keyboard)
+    await bot.edit_message_text(text=START_MSG, chat_id=call.message.chat.id, message_id=call.message.message_id, reply_markup=keyboard)
+
+@bot.callback_query_handler(func=lambda call: call.data == "lang")
+async def langcall(call):
+    user_settings = load_user_settings()
+    current_lang = user_settings.get(str(call.from_user.id))
+    
+    getlang = dlt.utils.get_lang_code_map()
+    lang_code_to_name = {code: name.upper() for name, code in getlang.items()}
+    
+    msg_text = "Please select your preferred language:"
+    if current_lang and current_lang in lang_code_to_name:
+        msg_text = f"🈷️ Current language: {lang_code_to_name[current_lang]} ({current_lang})\n\nSelect a language:"
+    
+    buttons = []
+    row = []
+    count = 0
+    
+    lang_items = list(getlang.items())
+    total_pages = (len(lang_items) + 49) // 50
+    current_page = 1
+    
+    page_langs = lang_items[:50]
+    
+    for lang_name, lang_code in page_langs:
+        display_text = f"{lang_name} ({lang_code})"
+        row.append(InlineKeyboardButton(display_text, callback_data=f"setlang_{lang_code}"))
+        count += 1
+        
+        if count % 3 == 0:
+            buttons.append(row)
+            row = []
+    
+    if row:
+        buttons.append(row)
+        
+    if total_pages > 1:
+        buttons.append([InlineKeyboardButton("Next ➡️", callback_data=f"langpage_{current_page + 1}")])
+    
+    keyboard = InlineKeyboardMarkup(buttons)
+
+    try:
+        await bot.edit_message_text(
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            text=msg_text,
+            reply_markup=keyboard
+        )
+    except Exception as e:
+        await bot.send_message(
+            chat_id=call.message.chat.id,
+            text=msg_text,
+            reply_markup=keyboard
+        )
 
 @bot.message_handler(commands=["lang"])
 async def lang(message):
@@ -201,7 +266,6 @@ async def translate_text(text: str, target_lang: str) -> str:
         # Convert language codes
         src_iso3 = langcode.get(src) 
         tgt_iso3 = langcode.get(target_lang.lower())
-        print(src_iso3, tgt_iso3)
         
         if not (src_iso3 and tgt_iso3):
             return "Unsupported language combination. Please check the language codes."
