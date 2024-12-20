@@ -1,4 +1,4 @@
-# This file make for converting ISO 639 - 1 to NLLB language code
+// This file make for converting ISO 639 - 1 to NLLB language code
 {
     "af": "afr_Latn",
     "als": "gsw_Latn",
