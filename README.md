@@ -53,9 +53,9 @@ A powerful **Telegram Bot** for translating text, voice, and images using **NLLB
    pip install -r requirements.txt
    ```
 
-3. Set up your `.env` file with your Telegram bot token:
+3. Make your `.env` file with your Telegram bot token:
    ```env
-   TOKEN=your-telegram-bot-token
+   BOT_TOKEN=your-telegram-bot-token
    ```
 
 4. Run the bot:
