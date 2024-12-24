@@ -14,7 +14,7 @@ load_dotenv()
 
 TOKEN = os.getenv('BOT_TOKEN') # load the bot token from env
 
-bot = AsyncTeleBot(TOKEN)# Fasttext model load
+bot = AsyncTeleBot(TOKEN)
 dl = dlt.TranslationModel("nllb200", device="cpu") # you can change it as cpu, cuda, or auto. prefer to cpu
 
 def load_user_settings():
